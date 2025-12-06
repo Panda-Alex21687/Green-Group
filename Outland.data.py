@@ -273,4 +273,4 @@ for table in tables:
     for row in cursor.fetchall():
         print(row)
 
-print("\nAll data displayed. Take your screenshots now!")
+print("\nAll data displayed!")
