@@ -4,7 +4,7 @@ import requests
 # ----------------------------
 # FETCH FILE FROM GITHUB
 # ----------------------------
-url = "https://raw.githubusercontent.com/Panda-Alex21687/Green-Group/main/module-9/Outland.data.py"
+url = "https://raw.githubusercontent.com/Panda-Alex21687/Green-Group/main/Outland.data.py"
 response = requests.get(url)
 
 print("\n--- GITHUB FETCH STATUS ---")
