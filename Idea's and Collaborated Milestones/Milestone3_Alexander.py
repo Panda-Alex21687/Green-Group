@@ -79,4 +79,53 @@ for row in rows:
 
 print("\n-------------------------------------------\n")
 
+# -------------------------------------------
+# REPORT 4: GUIDE ASSIGNMENT REPORT
+# -------------------------------------------
+print("REPORT 4: Guide Assignment Report\n")
+
+query_guide_assignments = """
+SELECT e.first_name, e.last_name, e.role,
+       COUNT(t.trip_id) AS trips_assigned
+FROM EMPLOYEE e
+LEFT JOIN TRIP t ON e.employee_id = t.guide_id
+WHERE e.role = 'Guide'
+GROUP BY e.employee_id, e.first_name, e.last_name, e.role
+ORDER BY trips_assigned DESC;
+"""
+
+cursor.execute(query_guide_assignments)
+rows = cursor.fetchall()
+
+for row in rows:
+    print(row)
+
+print("\n-------------------------------------------\n")
+
+# -------------------------------------------
+# REPORT 5: EQUIPMENT ORDER FREQUENCY
+# -------------------------------------------
+print("REPORT 5: Equipment Order Frequency\n")
+
+query_equipment_popularity = """
+SELECT e.item_name, e.item_type,
+       COUNT(DISTINCT ol.order_id) AS times_ordered,
+       COALESCE(SUM(ol.quantity), 0) AS total_quantity_ordered,
+       COALESCE(SUM(ol.quantity * ol.price_each), 0) AS total_revenue
+FROM EQUIPMENT e
+LEFT JOIN ORDER_LINE ol ON e.equipment_id = ol.equipment_id
+GROUP BY e.equipment_id, e.item_name, e.item_type
+ORDER BY total_revenue DESC;
+"""
+
+cursor.execute(query_equipment_popularity)
+rows = cursor.fetchall()
+
+for row in rows:
+    print(row)
+
+print("\n-------------------------------------------\n")
+
+
+
 print("All reports generated!")
