@@ -1,19 +1,4 @@
 import mysql.connector
-import requests
-
-# ----------------------------
-# FETCH FILE FROM GITHUB
-# ----------------------------
-url = "https://raw.githubusercontent.com/Panda-Alex21687/Green-Group/main/Idea's%20and%20Collaborated%20Milestones/Outland.data.py"
-response = requests.get(url)
-
-print("\n--- GITHUB FETCH STATUS ---")
-if response.status_code == 200:
-    print("GitHub file downloaded successfully!\n")
-    content = response.text
-    print(content)
-else:
-    print("Error fetching GitHub file:", response.status_code)
 
 # ----------------------------
 # CONNECT TO DATABASE
