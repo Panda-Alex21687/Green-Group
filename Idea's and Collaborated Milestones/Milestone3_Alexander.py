@@ -4,7 +4,7 @@ import requests
 # ----------------------------
 # FETCH FILE FROM GITHUB
 # ----------------------------
-url = "https://raw.githubusercontent.com/Panda-Alex21687/Green-Group/main/Outland.data.py"
+url = "https://github.com/Panda-Alex21687/Green-Group/blob/main/Idea's%20and%20Collaborated%20Milestones/Outland.data.py"
 response = requests.get(url)
 
 # ----------------------------
