@@ -1,3 +1,9 @@
+# Green team Milestone 3 Python Code
+# Alexander Baldree
+# Jordan Dardar
+# Maksymilian Jankowski
+# Aftabur Rahman
+
 import mysql.connector
 
 # ----------------------------
