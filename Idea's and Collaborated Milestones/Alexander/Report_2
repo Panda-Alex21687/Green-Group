@@ -1,6 +1,6 @@
-# Report_1.py
+# Report_2.py
 # Author: Alexander Baldree
-# Description: Report 1 – Equipment Older Than 5 Years
+# Description: Report 2 – Booking Trends by Region
 
 import mysql.connector
 from datetime import datetime
@@ -13,7 +13,7 @@ cst = pytz.timezone("US/Central")
 generated_timestamp = datetime.now(cst).strftime("%Y-%m-%d %H:%M:%S %Z")
 
 print("\n======================================================")
-print("REPORT 1: Equipment Older Than 5 Years")
+print("REPORT 2: Booking Trends by Region")
 print(f"Report Generated: {generated_timestamp}")
 print("======================================================\n")
 
@@ -35,42 +35,44 @@ except mysql.connector.Error as err:
     print(f"Error connecting to database: {err}")
     exit(1)
 
-# -------------------------------------------
-# REPORT 1 QUERY
-# -------------------------------------------
-query_equipment_age = """
+# ======================================================
+# SECTION 1: BOOKINGS BY REGION
+# ======================================================
+query_region_trends = """
 SELECT 
-    equipment_id,
-    item_name,
-    acquired_date,
-    TIMESTAMPDIFF(YEAR, acquired_date, CURDATE()) AS age_years
-FROM EQUIPMENT
-WHERE acquired_date <= DATE_SUB(CURDATE(), INTERVAL 5 YEAR)
-ORDER BY age_years DESC;
+    r.region_name,
+    COUNT(b.booking_id) AS total_bookings
+FROM REGION r
+LEFT JOIN TRIP t 
+    ON r.region_id = t.region_id
+LEFT JOIN BOOKING b 
+    ON t.trip_id = b.trip_id
+GROUP BY r.region_name
+ORDER BY total_bookings DESC;
 """
 
-cursor.execute(query_equipment_age)
+cursor.execute(query_region_trends)
 rows = cursor.fetchall()
 
-# -------------------------------------------
-# TABLE OUTPUT
-# -------------------------------------------
-print(f"{'Equipment ID':<15}{'Item Name':<25}{'Acquired Date':<15}{'Age (Years)':>12}")
-print("-" * 70)
+print(f"{'Region':<25}{'Total Bookings':>15}")
+print("-" * 40)
 
-for equipment_id, item_name, acquired_date, age_years in rows:
+grand_total = 0
+
+for region_name, total_bookings in rows:
+    grand_total += total_bookings
     print(
-        f"{equipment_id:<15}"
-        f"{item_name:<25}"
-        f"{str(acquired_date):<15}"
-        f"{age_years:>12}"
+        f"{region_name:<25}"
+        f"{total_bookings:>15}"
     )
 
-print("\n======================================================\n")
+print("\n-------------------------------------------")
+print(f"{'GRAND TOTAL':<25}{grand_total:>15}")
+print("-------------------------------------------\n")
 
-# -------------------------------------------
+# ======================================================
 # CLEANUP
-# -------------------------------------------
+# ======================================================
 cursor.close()
 db.close()
 print("Database connection closed.")
