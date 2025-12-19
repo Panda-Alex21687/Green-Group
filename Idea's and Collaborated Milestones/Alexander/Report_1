@@ -1,0 +1,32 @@
+# -------------------------------------------
+# REPORT 1 QUERY
+# -------------------------------------------
+query_equipment_age = """
+SELECT 
+    equipment_id,
+    item_name,
+    acquired_date,
+    TIMESTAMPDIFF(YEAR, acquired_date, CURDATE()) AS age_years
+FROM EQUIPMENT
+WHERE acquired_date <= DATE_SUB(CURDATE(), INTERVAL 5 YEAR)
+ORDER BY age_years DESC;
+"""
+
+cursor.execute(query_equipment_age)
+rows = cursor.fetchall()
+
+# -------------------------------------------
+# TABLE OUTPUT
+# -------------------------------------------
+print(f"{'Equipment ID':<15}{'Item Name':<25}{'Acquired Date':<15}{'Age (Years)':>12}")
+print("-" * 70)
+
+for equipment_id, item_name, acquired_date, age_years in rows:
+    print(
+        f"{equipment_id:<15}"
+        f"{item_name:<25}"
+        f"{str(acquired_date):<15}"
+        f"{age_years:>12}"
+    )
+
+print("\n======================================================\n")
