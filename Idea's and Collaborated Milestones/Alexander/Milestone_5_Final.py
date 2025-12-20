@@ -1,5 +1,11 @@
-# Milestone_5_Alexander.py
-# Author: Alexander Baldree
+# Milestone_5_Final.py
+# Green team Milestone 5 Python Code
+
+#  Alexander Baldree
+# Jordan Dardar
+# Maksymilian Jankowski
+# Aftabur Rahman
+
 # Description: Final Combined Reports 1–5 for Outland Adventures (Milestone #5)
 
 import mysql.connector
