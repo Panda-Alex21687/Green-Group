@@ -12,7 +12,7 @@ import pytz
 DB_CONFIG = {
     "host": "localhost",
     "user": "root",
-    "password": "Gillmore21",   # keep your password
+    "password": "Gillmore21",
     "database": "outland"
 }
 
@@ -66,14 +66,43 @@ except mysql.connector.Error as err:
     print(f"Database connection error: {err}")
     exit(1)
 
+# -------------------------------------------
+# AUTO-DETECT EQUIPMENT TABLE COLUMNS
+# -------------------------------------------
+cursor.execute("DESCRIBE EQUIPMENT;")
+columns = cursor.fetchall()
+
+column_names = [c[0] for c in columns]
+
+# detect equipment descriptor column
+equipment_column = None
+for col in column_names:
+    if "id" not in col.lower() and "date" not in col.lower():
+        equipment_column = col
+        break
+
+# detect date column
+date_column = None
+for col in column_names:
+    if "date" in col.lower():
+        date_column = col
+        break
+
+if not equipment_column or not date_column:
+    print("ERROR: Could not determine equipment or date column.")
+    print("Detected columns:", column_names)
+    cursor.close()
+    db.close()
+    exit(1)
+
 # =====================================================
-# REPORT 1 – EQUIPMENT OLDER THAN 5 YEARS (FIXED)
+# REPORT 1 – EQUIPMENT OLDER THAN 5 YEARS (AUTO-SAFE)
 # =====================================================
-query_report_1 = """
-SELECT equipment_desc,
-       purchase_date
+query_report_1 = f"""
+SELECT {equipment_column},
+       {date_column}
 FROM EQUIPMENT
-WHERE purchase_date < DATE_SUB(CURDATE(), INTERVAL 5 YEAR);
+WHERE {date_column} < DATE_SUB(CURDATE(), INTERVAL 5 YEAR);
 """
 
 cursor.execute(query_report_1)
@@ -81,7 +110,7 @@ rows = cursor.fetchall()
 
 print_formatted_report(
     title="Report 1 – Equipment Older Than 5 Years",
-    headers=["Equipment Description", "Purchase Date"],
+    headers=["Equipment", "Purchase Date"],
     rows=[(r[0], r[1].strftime("%Y-%m-%d")) for r in rows]
 )
 
@@ -125,47 +154,90 @@ print_formatted_report(
     currency_cols=[1]
 )
 
-# =====================================================
-# REPORT 4 – BOOKINGS BY REGION
-# =====================================================
-query_report_4 = """
-SELECT region,
-       COUNT(*) AS total_bookings
-FROM CUSTOMER_BOOKING
-GROUP BY region;
+# report 4 guide assignments 
+
+print("REPORT 4: Guide Assignment Report\n")
+from datetime import datetime  # Add this import at the top of your file
+
+query_guide_assignments = """
+SELECT e.first_name, e.last_name, e.role,
+       COUNT(t.trip_id) AS trips_assigned
+FROM EMPLOYEE e
+LEFT JOIN TRIP t ON e.employee_id = t.guide_id
+WHERE e.role = 'Guide'
+GROUP BY e.employee_id, e.first_name, e.last_name, e.role
+ORDER BY trips_assigned DESC;
 """
 
-cursor.execute(query_report_4)
+cursor.execute(query_guide_assignments)
 rows = cursor.fetchall()
 
-print_formatted_report(
-    title="Report 4 – Customer Bookings by Region",
-    headers=["Region", "Total Bookings"],
-    rows=rows
-)
+# Print uppercase headers
+print(f"{'FIRST NAME':<15} {'LAST NAME':<15} {'ROLE':<10} {'TRIPS ASSIGNED':<15}")
+print("-" * 60)
 
-# =====================================================
-# REPORT 5 – TOP REVENUE-GENERATING EQUIPMENT
-# =====================================================
-query_report_5 = """
-SELECT e.equipment_desc,
-       SUM(ol.quantity * ol.price_each) AS total_revenue
+# Print formatted data
+for row in rows:
+    print(f"{row[0]:<15} {row[1]:<15} {row[2]:<10} {row[3]:<15}")
+
+# Add timestamp at the bottom
+report_time = datetime.now().strftime('%Y-%m-%d %H:%M:%S')
+print(f"\nReport generated on: {report_time}")
+
+print("\n-------------------------------------------\n")
+
+# report 5 frequency of equipment order 
+from datetime import datetime  # Make sure this is at the top of your file
+
+print("REPORT 5: Equipment Order Frequency\n")
+
+query_equipment_popularity = """
+SELECT e.item_name, e.item_type,
+       COUNT(DISTINCT ol.order_id) AS times_ordered,
+       COALESCE(SUM(ol.quantity), 0) AS total_quantity_ordered,
+       COALESCE(SUM(ol.quantity * ol.price_each), 0) AS total_revenue
 FROM EQUIPMENT e
-JOIN ORDER_LINE ol ON e.equipment_id = ol.equipment_id
-GROUP BY e.equipment_desc
-ORDER BY total_revenue DESC
-LIMIT 5;
+LEFT JOIN ORDER_LINE ol ON e.equipment_id = ol.equipment_id
+GROUP BY e.equipment_id, e.item_name, e.item_type
+ORDER BY total_revenue DESC;
 """
 
-cursor.execute(query_report_5)
+cursor.execute(query_equipment_popularity)
 rows = cursor.fetchall()
 
-print_formatted_report(
-    title="Report 5 – Top Revenue-Generating Equipment",
-    headers=["Equipment Description", "Total Revenue"],
-    rows=rows,
-    currency_cols=[1]
-)
+# Separate rentals and sales
+rentals = [row for row in rows if row[1] == 'Rental']
+sales = [row for row in rows if row[1] == 'Sale']
+
+# Print RENTALS section
+print("=" * 90)
+print("RENTALS")
+print("=" * 90)
+print(f"{'ITEM NAME':<25} {'ITEM TYPE':<12} {'TIMES ORDERED':<15} {'TOTAL QUANTITY':<16} {'TOTAL REVENUE':<15}")
+print("-" * 90)
+
+for row in rentals:
+    print(f"{row[0]:<25} {row[1]:<12} {row[2]:<15} {row[3]:<16} ${row[4]:<14.2f}")
+
+print(f"\nTotal Rental Items: {len(rentals)}")
+
+# Print SALES section
+print("\n" + "=" * 90)
+print("SALES")
+print("=" * 90)
+print(f"{'ITEM NAME':<25} {'ITEM TYPE':<12} {'TIMES ORDERED':<15} {'TOTAL QUANTITY':<16} {'TOTAL REVENUE':<15}")
+print("-" * 90)
+
+for row in sales:
+    print(f"{row[0]:<25} {row[1]:<12} {row[2]:<15} {row[3]:<16} ${row[4]:<14.2f}")
+
+print(f"\nTotal Sale Items: {len(sales)}")
+
+# Add timestamp at the bottom
+report_time = datetime.now().strftime('%Y-%m-%d %H:%M:%S')
+print(f"\nReport generated on: {report_time}")
+
+print("\n-------------------------------------------\n")
 
 # -------------------------------------------
 # CLEANUP
